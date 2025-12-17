@@ -121,12 +121,27 @@ async function fetchVapidPublicKey() {
 
 // Request notification permission
 async function requestNotificationPermission() {
-  if (!isPWAInstalled()) {
-    showError('Please add this app to your Home Screen first');
+  console.log('[App] Requesting notification permission...');
+  console.log('[App] Current permission:', Notification.permission);
+  console.log('[App] isPWAInstalled:', isPWAInstalled());
+  
+  // Check if already granted
+  if (Notification.permission === 'granted') {
+    console.log('[App] Permission already granted');
+    state.notificationPermission = 'granted';
+    return true;
+  }
+  
+  // iOS check - must be in PWA mode
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  if (isIOS && !window.navigator.standalone) {
+    showError('On iOS, please open this app from Home Screen (not Safari)');
+    console.error('[App] Not in standalone mode on iOS');
     return false;
   }
   
   try {
+    console.log('[App] Calling Notification.requestPermission()...');
     const permission = await Notification.requestPermission();
     state.notificationPermission = permission;
     console.log('[App] Permission result:', permission);
@@ -135,11 +150,12 @@ async function requestNotificationPermission() {
       showSuccess('Notification permission granted!');
       return true;
     } else if (permission === 'denied') {
-      showError('Notification permission denied. Please enable in Settings.');
+      showError('Notification permission denied. Go to Settings → Safari → PushMe to enable.');
+      return false;
+    } else {
+      showError('Notification permission not granted');
       return false;
     }
-    
-    return false;
   } catch (error) {
     console.error('[App] Permission request failed:', error);
     showError('Failed to request permission: ' + error.message);
@@ -150,22 +166,30 @@ async function requestNotificationPermission() {
 // Subscribe to push notifications
 async function subscribeToPush() {
   try {
+    console.log('[App] Starting push subscription...');
+    
     if (!state.swRegistration) {
       throw new Error('Service Worker not registered');
     }
+    console.log('[App] Service Worker OK');
     
     if (!CONFIG.vapidPublicKey) {
+      console.log('[App] Fetching VAPID key...');
       await fetchVapidPublicKey();
     }
+    console.log('[App] VAPID key available');
     
     // Check existing subscription
     let subscription = await state.swRegistration.pushManager.getSubscription();
     
     if (subscription) {
-      console.log('[App] Already subscribed');
+      console.log('[App] Already subscribed:', subscription.endpoint);
       state.pushSubscription = subscription;
+      showSuccess('Already subscribed to notifications!');
       return subscription;
     }
+    
+    console.log('[App] Creating new subscription...');
     
     // Create new subscription
     const applicationServerKey = urlBase64ToUint8Array(CONFIG.vapidPublicKey);
@@ -175,16 +199,41 @@ async function subscribeToPush() {
       applicationServerKey: applicationServerKey
     });
     
-    console.log('[App] Push subscription created:', subscription);
+    console.log('[App] Push subscription created:', {
+      endpoint: subscription.endpoint,
+      keys: subscription.toJSON().keys
+    });
+    
     state.pushSubscription = subscription;
     
     // Send subscription to server
+    console.log('[App] Sending subscription to server...');
     await sendSubscriptionToServer(subscription);
+    console.log('[App] Subscription complete!');
+    
+    showSuccess('Successfully subscribed to notifications!');
     
     return subscription;
   } catch (error) {
     console.error('[App] Push subscription failed:', error);
-    showError('Failed to subscribe: ' + error.message);
+    console.error('[App] Error details:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
+    
+    let errorMsg = 'Failed to subscribe: ' + error.message;
+    
+    // Specific error messages
+    if (error.name === 'NotAllowedError') {
+      errorMsg = 'Notification permission was denied. Please enable in Settings.';
+    } else if (error.name === 'NotSupportedError') {
+      errorMsg = 'Push notifications not supported on this device/browser.';
+    } else if (error.message.includes('VAPID')) {
+      errorMsg = 'Failed to connect to server. Please try again.';
+    }
+    
+    showError(errorMsg);
     throw error;
   }
 }
