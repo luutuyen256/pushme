@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PushMe Admin - Send Notification</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .admin-container {
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #333;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+      box-sizing: border-box;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #4285f4;
+      box-shadow: 0 0 0 3px rgba(66,133,244,0.1);
+    }
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    .btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      margin-top: 10px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(102,126,234,0.4);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .message {
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .message.info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .subscribers-count {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .subscribers-count strong {
+      font-size: 24px;
+      color: #4285f4;
+    }
+    .api-info {
+      background: #fff3cd;
+      padding: 15px;
+      border-radius: 12px;
+      margin-top: 30px;
+      border: 1px solid #ffeaa7;
+    }
+    .api-info h3 {
+      margin: 0 0 10px 0;
+      color: #856404;
+      font-size: 16px;
+    }
+    .api-info code {
+      background: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 13px;
+      color: #d63384;
+    }
+    .api-info pre {
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 12px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <h1>🚀 Push Notification Admin</h1>
+    <p class="subtitle">Gửi push notification đến tất cả subscribers</p>
+
+    <div id="message" class="message"></div>
+
+    <div class="subscribers-count">
+      <div style="color: #666; font-size: 14px; margin-bottom: 5px;">Số subscribers</div>
+      <div><strong id="subscriber-count">...</strong></div>
+    </div>
+
+    <form id="notification-form">
+      <div class="form-group">
+        <label for="title">Tiêu đề notification</label>
+        <input 
+          type="text" 
+          id="title" 
+          name="title" 
+          placeholder="VD: Hello from PushMe!" 
+          required
+          maxlength="100"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="body">Nội dung</label>
+        <textarea 
+          id="body" 
+          name="body" 
+          placeholder="VD: This is a test notification from your PWA app!" 
+          required
+          maxlength="300"
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="url">URL (optional)</label>
+        <input 
+          type="url" 
+          id="url" 
+          name="url" 
+          placeholder="VD: https://luutuyen256.github.io/pushme/"
+        >
+      </div>
+
+      <button type="submit" class="btn" id="send-btn">
+        📤 Gửi Notification
+      </button>
+    </form>
+
+    <div class="api-info">
+      <h3>📋 API Endpoints</h3>
+      <p><strong>Server:</strong> <code id="api-url">...</code></p>
+      
+      <p style="margin-top: 15px;"><strong>Gửi notification bằng cURL:</strong></p>
+      <pre><code>curl -X POST ${API_URL}/send-notification \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Hello!",
+    "body": "Test notification",
+    "url": "/"
+  }'</code></pre>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE_URL = 'https://3lxt16dul9.execute-api.ap-southeast-1.amazonaws.com';
+    
+    // Update API URL in UI
+    document.getElementById('api-url').textContent = API_BASE_URL;
+    document.querySelector('.api-info pre code').textContent = 
+      `curl -X POST ${API_BASE_URL}/send-notification \\\n` +
+      `  -H "Content-Type: application/json" \\\n` +
+      `  -d '{\n` +
+      `    "title": "Hello!",\n` +
+      `    "body": "Test notification",\n` +
+      `    "url": "/"\n` +
+      `  }'`;
+
+    // Show message
+    function showMessage(text, type = 'info') {
+      const messageEl = document.getElementById('message');
+      messageEl.textContent = text;
+      messageEl.className = `message ${type}`;
+      messageEl.style.display = 'block';
+      
+      setTimeout(() => {
+        messageEl.style.display = 'none';
+      }, 5000);
+    }
+
+    // Fetch subscriber count
+    async function fetchSubscriberCount() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/subscribers/count`);
+        if (response.ok) {
+          const data = await response.json();
+          document.getElementById('subscriber-count').textContent = data.count || '0';
+        } else {
+          document.getElementById('subscriber-count').textContent = 'N/A';
+        }
+      } catch (error) {
+        console.error('Failed to fetch subscriber count:', error);
+        document.getElementById('subscriber-count').textContent = 'Error';
+      }
+    }
+
+    // Send notification
+    async function sendNotification(data) {
+      const sendBtn = document.getElementById('send-btn');
+      sendBtn.disabled = true;
+      sendBtn.textContent = '⏳ Đang gửi...';
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/send-notification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || `HTTP ${response.status}`);
+        }
+
+        const result = await response.json();
+        showMessage(
+          `✅ Đã gửi notification đến ${result.sentCount || 'tất cả'} subscribers!`, 
+          'success'
+        );
+        
+        // Reset form
+        document.getElementById('notification-form').reset();
+        
+        // Refresh subscriber count
+        fetchSubscriberCount();
+      } catch (error) {
+        console.error('Send notification failed:', error);
+        showMessage(`❌ Lỗi: ${error.message}`, 'error');
+      } finally {
+        sendBtn.disabled = false;
+        sendBtn.textContent = '📤 Gửi Notification';
+      }
+    }
+
+    // Form submit handler
+    document.getElementById('notification-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = {
+        title: formData.get('title').trim(),
+        body: formData.get('body').trim(),
+        url: formData.get('url').trim() || '/'
+      };
+
+      if (!data.title || !data.body) {
+        showMessage('Vui lòng điền đầy đủ tiêu đề và nội dung', 'error');
+        return;
+      }
+
+      sendNotification(data);
+    });
+
+    // Initial load
+    fetchSubscriberCount();
+    
+    // Auto refresh every 30 seconds
+    setInterval(fetchSubscriberCount, 30000);
+  </script>
+</body>
+</html>

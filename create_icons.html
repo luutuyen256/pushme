@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head><title>Generate Icons</title></head>
+<body>
+<canvas id="canvas"></canvas>
+<script>
+const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function createIcon(size) {
+  canvas.width = size;
+  canvas.height = size;
+  
+  // Background
+  ctx.fillStyle = '#4285f4';
+  ctx.beginPath();
+  ctx.roundRect(0, 0, size, size, size/4.27);
+  ctx.fill();
+  
+  // Bell icon (simplified)
+  ctx.fillStyle = 'white';
+  const scale = size / 512;
+  ctx.save();
+  ctx.scale(scale, scale);
+  
+  // Bell body
+  ctx.beginPath();
+  ctx.moveTo(256, 149);
+  ctx.quadraticCurveTo(170, 149, 170, 235);
+  ctx.lineTo(170, 299);
+  ctx.lineTo(149, 320);
+  ctx.lineTo(149, 341);
+  ctx.lineTo(363, 341);
+  ctx.lineTo(363, 320);
+  ctx.lineTo(342, 299);
+  ctx.lineTo(342, 235);
+  ctx.quadraticCurveTo(342, 149, 256, 149);
+  ctx.fill();
+  
+  // Bell bottom
+  ctx.beginPath();
+  ctx.arc(256, 394, 22, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.restore();
+  
+  // Download
+  canvas.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `icon-${size}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+}
+
+sizes.forEach((size, i) => {
+  setTimeout(() => createIcon(size), i * 100);
+});
+
+// Create maskable versions
+setTimeout(() => {
+  createIcon(192);
+  setTimeout(() => {
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'icon-192-maskable.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }, 100);
+}, sizes.length * 100);
+
+setTimeout(() => {
+  createIcon(512);
+  setTimeout(() => {
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'icon-512-maskable.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }, 100);
+}, (sizes.length + 1) * 100);
+
+// Badge
+setTimeout(() => {
+  createIcon(72);
+  setTimeout(() => {
+    canvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'badge-72.png';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }, 100);
+}, (sizes.length + 2) * 100);
+</script>
+</body>
+</html>
