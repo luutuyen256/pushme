@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check Service Worker</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .result {
+      background: #252526;
+      padding: 15px;
+      border-radius: 4px;
+      margin: 10px 0;
+      border-left: 4px solid #007acc;
+    }
+    .result.success {
+      border-left-color: #89d185;
+    }
+    .result.error {
+      border-left-color: #f48771;
+    }
+    button {
+      background: #0e639c;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    button:hover {
+      background: #1177bb;
+    }
+    pre {
+      background: #1e1e1e;
+      padding: 10px;
+      overflow-x: auto;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+    h1 {
+      color: #4ec9b0;
+    }
+    h2 {
+      color: #569cd6;
+      font-size: 18px;
+      margin-top: 30px;
+    }
+    .timestamp {
+      color: #858585;
+      font-size: 11px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔍 Service Worker Cache Checker</h1>
+  <p>Domain: <strong>https://luutuyen256.github.io/pushme/</strong></p>
+
+  <div>
+    <button onclick="checkSWFile()">1. Check if sw.js exists</button>
+    <button onclick="checkSWRegistration()">2. Check SW Registration</button>
+    <button onclick="checkCaches()">3. Check Caches</button>
+    <button onclick="clearAllCaches()">4. Clear ALL Caches</button>
+    <button onclick="unregisterSW()">5. Unregister SW</button>
+    <button onclick="fullReset()">🔴 Full Reset</button>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    const BASE_URL = 'https://luutuyen256.github.io/pushme';
+    const SW_URL = `${BASE_URL}/sw.js`;
+
+    function addResult(title, content, type = 'info') {
+      const div = document.createElement('div');
+      div.className = `result ${type}`;
+      
+      const timestamp = new Date().toLocaleTimeString();
+      div.innerHTML = `
+        <div class="timestamp">${timestamp}</div>
+        <h3>${title}</h3>
+        <pre>${content}</pre>
+      `;
+      
+      document.getElementById('results').appendChild(div);
+      console.log(title, content);
+    }
+
+    // 1. Check if sw.js file exists
+    async function checkSWFile() {
+      try {
+        addResult('📝 Checking sw.js file...', 'Fetching from: ' + SW_URL);
+        
+        // Test with cache busting
+        const cacheBustedURL = `${SW_URL}?v=${Date.now()}`;
+        const response = await fetch(cacheBustedURL, {
+          method: 'HEAD',
+          cache: 'no-cache'
+        });
+        
+        const info = `
+Status: ${response.status} ${response.statusText}
+Content-Type: ${response.headers.get('content-type')}
+Content-Length: ${response.headers.get('content-length')} bytes
+Last-Modified: ${response.headers.get('last-modified')}
+Cache-Control: ${response.headers.get('cache-control')}
+ETag: ${response.headers.get('etag')}
+X-Cache: ${response.headers.get('x-cache')}
+        `;
+        
+        if (response.ok) {
+          addResult('✅ sw.js exists!', info, 'success');
+          
+          // Also fetch content
+          const contentResponse = await fetch(cacheBustedURL, { cache: 'no-cache' });
+          const text = await contentResponse.text();
+          addResult('📄 sw.js content (first 500 chars)', text.substring(0, 500) + '...', 'success');
+        } else {
+          addResult('❌ sw.js NOT found', info, 'error');
+        }
+      } catch (error) {
+        addResult('❌ Error checking sw.js', error.message, 'error');
+      }
+    }
+
+    // 2. Check Service Worker Registration
+    async function checkSWRegistration() {
+      if (!('serviceWorker' in navigator)) {
+        addResult('❌ Service Worker not supported', 'Browser does not support Service Workers', 'error');
+        return;
+      }
+
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        
+        if (registrations.length === 0) {
+          addResult('⚠️ No Service Worker registered', 'No registrations found', 'error');
+          return;
+        }
+
+        registrations.forEach((reg, i) => {
+          const info = `
+Registration ${i + 1}:
+  Scope: ${reg.scope}
+  Active: ${reg.active ? reg.active.scriptURL : 'none'}
+  Installing: ${reg.installing ? reg.installing.scriptURL : 'none'}
+  Waiting: ${reg.waiting ? reg.waiting.scriptURL : 'none'}
+  State: ${reg.active ? reg.active.state : 'none'}
+          `;
+          addResult('✅ Service Worker Registration', info, 'success');
+        });
+      } catch (error) {
+        addResult('❌ Error checking SW registration', error.message, 'error');
+      }
+    }
+
+    // 3. Check Caches
+    async function checkCaches() {
+      if (!('caches' in window)) {
+        addResult('❌ Cache API not supported', '', 'error');
+        return;
+      }
+
+      try {
+        const cacheNames = await caches.keys();
+        
+        if (cacheNames.length === 0) {
+          addResult('ℹ️ No caches found', 'Cache storage is empty', 'info');
+          return;
+        }
+
+        addResult('📦 Found ' + cacheNames.length + ' cache(s)', cacheNames.join('\n'), 'success');
+
+        // Check each cache
+        for (const name of cacheNames) {
+          const cache = await caches.open(name);
+          const requests = await cache.keys();
+          
+          const urls = requests.map(req => req.url).join('\n  ');
+          addResult(`Cache: ${name}`, `Contains ${requests.length} items:\n  ${urls}`, 'success');
+        }
+      } catch (error) {
+        addResult('❌ Error checking caches', error.message, 'error');
+      }
+    }
+
+    // 4. Clear All Caches
+    async function clearAllCaches() {
+      if (!confirm('Are you sure you want to delete ALL caches?')) {
+        return;
+      }
+
+      try {
+        const cacheNames = await caches.keys();
+        
+        if (cacheNames.length === 0) {
+          addResult('ℹ️ No caches to clear', '', 'info');
+          return;
+        }
+
+        let deleted = 0;
+        for (const name of cacheNames) {
+          await caches.delete(name);
+          deleted++;
+          addResult(`🗑️ Deleted cache: ${name}`, '', 'success');
+        }
+
+        addResult('✅ All caches cleared!', `Deleted ${deleted} cache(s)`, 'success');
+      } catch (error) {
+        addResult('❌ Error clearing caches', error.message, 'error');
+      }
+    }
+
+    // 5. Unregister Service Worker
+    async function unregisterSW() {
+      if (!confirm('Are you sure you want to unregister the Service Worker?')) {
+        return;
+      }
+
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        
+        if (registrations.length === 0) {
+          addResult('ℹ️ No Service Worker to unregister', '', 'info');
+          return;
+        }
+
+        for (const registration of registrations) {
+          await registration.unregister();
+          addResult('✅ Unregistered SW', registration.scope, 'success');
+        }
+      } catch (error) {
+        addResult('❌ Error unregistering SW', error.message, 'error');
+      }
+    }
+
+    // Full Reset
+    async function fullReset() {
+      if (!confirm('⚠️ This will:\n- Clear all caches\n- Unregister Service Worker\n- Clear localStorage\n\nContinue?')) {
+        return;
+      }
+
+      addResult('🔄 Starting full reset...', '', 'info');
+
+      // Clear caches
+      try {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          await caches.delete(name);
+        }
+        addResult('✅ Caches cleared', cacheNames.length + ' cache(s) deleted', 'success');
+      } catch (error) {
+        addResult('⚠️ Cache clear failed', error.message, 'error');
+      }
+
+      // Unregister SW
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.unregister();
+        }
+        addResult('✅ Service Workers unregistered', registrations.length + ' unregistered', 'success');
+      } catch (error) {
+        addResult('⚠️ SW unregister failed', error.message, 'error');
+      }
+
+      // Clear localStorage
+      try {
+        localStorage.clear();
+        addResult('✅ localStorage cleared', '', 'success');
+      } catch (error) {
+        addResult('⚠️ localStorage clear failed', error.message, 'error');
+      }
+
+      addResult('🎉 Full reset complete!', 'Please refresh the page', 'success');
+    }
+
+    // Auto check on load
+    window.addEventListener('load', () => {
+      addResult('🚀 Page loaded', 'Ready to check Service Worker status', 'info');
+      
+      // Show current URL
+      addResult('ℹ️ Current location', window.location.href, 'info');
+      
+      // Show if in PWA mode
+      const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                    window.navigator.standalone === true;
+      addResult('ℹ️ PWA Mode', isPWA ? 'YES (Standalone)' : 'NO (Browser)', 'info');
+    });
+  </script>
+</body>
+</html>
