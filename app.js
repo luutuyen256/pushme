@@ -84,7 +84,9 @@ function checkBrowserSupport() {
 // Register Service Worker
 async function registerServiceWorker() {
   try {
-    const registration = await navigator.serviceWorker.register('/sw.js');
+    const registration = await navigator.serviceWorker.register('/pushme/sw.js', {
+      scope: '/pushme/'
+    });
     console.log('[App] Service Worker registered:', registration);
     
     // Wait for Service Worker to be ready

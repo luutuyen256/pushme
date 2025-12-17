@@ -4,13 +4,13 @@ const CACHE_NAME = `pushme-${CACHE_VERSION}`;
 
 // Assets to cache for offline functionality
 const ASSETS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/app.js',
-  '/style.css',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/pushme/',
+  '/pushme/index.html',
+  '/pushme/app.js',
+  '/pushme/style.css',
+  '/pushme/manifest.json',
+  '/pushme/icons/icon-192.png',
+  '/pushme/icons/icon-512.png'
 ];
 
 // Install event - cache assets
@@ -89,9 +89,9 @@ self.addEventListener('push', (event) => {
   
   const options = {
     body: data.body || 'You have a new notification',
-    icon: data.icon || '/icons/icon-192.png',
-    badge: '/icons/badge-72.png',
-    data: data.url || '/',
+    icon: data.icon || '/pushme/icons/icon-192.png',
+    badge: '/pushme/icons/badge-72.png',
+    data: data.url || '/pushme/',
     tag: data.tag || 'notification',
     requireInteraction: false,
     vibrate: [200, 100, 200],
