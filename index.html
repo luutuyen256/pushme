@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="PWA Push Notifications for iPhone">
+  <meta name="theme-color" content="#4285f4">
+  
+  <!-- PWA Meta Tags -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PushMe">
+  
+  <!-- Apple Touch Icons -->
+  <link rel="apple-touch-icon" href="/icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png">
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-192.png">
+  
+  <title>PushMe - PWA Push Notifications</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="48" height="48" rx="12" fill="#4285f4"/>
+          <path d="M24 14C19.58 14 16 17.58 16 22V28L14 30V32H34V30L32 28V22C32 17.58 28.42 14 24 14ZM26 35H22C22 36.1 22.9 37 24 37C25.1 37 26 36.1 26 35Z" fill="white"/>
+        </svg>
+        <h1>PushMe</h1>
+      </div>
+      <p class="subtitle">PWA Push Notifications for iPhone</p>
+    </header>
+
+    <!-- Message Display -->
+    <div id="message" class="message" style="display: none;"></div>
+
+    <!-- PWA Installation Prompt -->
+    <section id="install-prompt" class="section install-section">
+      <div class="icon-wrapper">
+        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M32 12L32 42M32 42L42 32M32 42L22 32" stroke="#4285f4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <rect x="8" y="46" width="48" height="6" rx="2" fill="#4285f4"/>
+        </svg>
+      </div>
+      
+      <h2>Install as PWA</h2>
+      <p class="instruction">
+        To enable push notifications on iPhone, you need to add this app to your Home Screen:
+      </p>
+      
+      <ol class="steps">
+        <li>
+          <strong>Tap the Share button</strong> 
+          <span class="share-icon">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M10 3V13M10 3L6 7M10 3L14 7M4 13V17H16V13"/>
+            </svg>
+          </span> 
+          in Safari
+        </li>
+        <li>
+          <strong>Scroll down</strong> and tap <strong>"Add to Home Screen"</strong>
+        </li>
+        <li>
+          <strong>Tap "Add"</strong> in the top right corner
+        </li>
+        <li>
+          <strong>Open the app</strong> from your Home Screen
+        </li>
+      </ol>
+      
+      <div class="note">
+        <strong>Note:</strong> This app requires iOS 16.4 or later and Safari browser.
+      </div>
+    </section>
+
+    <!-- Notification Section (shown after PWA installation) -->
+    <section id="notification-section" class="section" style="display: none;">
+      <!-- Status -->
+      <div class="status-card">
+        <h2>Status</h2>
+        <div class="status-item">
+          <span class="status-label">PWA Status:</span>
+          <span id="pwa-status" class="status-text success">✓ Installed as PWA</span>
+        </div>
+        <div class="status-item">
+          <span class="status-label">Notifications:</span>
+          <span id="permission-status" class="status-text">⚠ Permission not requested</span>
+        </div>
+        <div id="subscription-info" class="status-item" style="display: none;">
+          <span class="status-text success">✓ Subscribed to push notifications</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button id="enable-notifications" class="btn btn-primary">
+          Enable Notifications
+        </button>
+        <button id="disable-notifications" class="btn btn-secondary" style="display: none;">
+          Disable Notifications
+        </button>
+      </div>
+
+      <!-- Info Cards -->
+      <div class="info-cards">
+        <div class="info-card">
+          <div class="info-icon">🔔</div>
+          <h3>Real-time Notifications</h3>
+          <p>Receive push notifications even when the app is closed</p>
+        </div>
+        
+        <div class="info-card">
+          <div class="info-icon">🔒</div>
+          <h3>Secure & Private</h3>
+          <p>Your subscription data is encrypted and secure</p>
+        </div>
+        
+        <div class="info-card">
+          <div class="info-icon">⚡</div>
+          <h3>Instant Delivery</h3>
+          <p>Notifications arrive instantly on your device</p>
+        </div>
+      </div>
+
+      <!-- How it Works -->
+      <div class="how-it-works">
+        <h2>How It Works</h2>
+        <div class="steps-list">
+          <div class="step-item">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h4>Enable Notifications</h4>
+              <p>Grant permission to receive push notifications</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h4>Stay Connected</h4>
+              <p>Your device subscribes to our push service</p>
+            </div>
+          </div>
+          <div class="step-item">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h4>Get Notified</h4>
+              <p>Receive notifications on your lock screen</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Debug Info (for development) -->
+      <details class="debug-section">
+        <summary>Debug Information</summary>
+        <div class="debug-content">
+          <p><strong>User Agent:</strong></p>
+          <code id="user-agent"></code>
+          
+          <p><strong>Display Mode:</strong></p>
+          <code id="display-mode"></code>
+          
+          <p><strong>Notification Permission:</strong></p>
+          <code id="debug-permission"></code>
+          
+          <p><strong>Service Worker State:</strong></p>
+          <code id="sw-state"></code>
+        </div>
+      </details>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2025 PushMe. Built with ❤️ for iPhone Safari.</p>
+      <p class="tech-stack">PWA • Service Worker • Web Push API</p>
+    </footer>
+  </div>
+
+  <!-- Scripts -->
+  <script src="/app.js"></script>
+  
+  <!-- Debug Script -->
+  <script>
+    // Populate debug information
+    if (document.getElementById('user-agent')) {
+      document.getElementById('user-agent').textContent = navigator.userAgent;
+    }
+    
+    function updateDebugInfo() {
+      const displayMode = window.matchMedia('(display-mode: standalone)').matches 
+        ? 'standalone' 
+        : 'browser';
+      
+      if (document.getElementById('display-mode')) {
+        document.getElementById('display-mode').textContent = displayMode;
+      }
+      
+      if (document.getElementById('debug-permission')) {
+        document.getElementById('debug-permission').textContent = 
+          'Notification' in window ? Notification.permission : 'Not supported';
+      }
+      
+      if (document.getElementById('sw-state')) {
+        navigator.serviceWorker.ready.then((registration) => {
+          document.getElementById('sw-state').textContent = 
+            registration.active ? 'Active' : 'Not active';
+        });
+      }
+    }
+    
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', updateDebugInfo);
+    } else {
+      updateDebugInfo();
+    }
+  </script>
+</body>
+</html>
