@@ -167,11 +167,18 @@
           <p><strong>Display Mode:</strong></p>
           <code id="display-mode"></code>
           
+          <p><strong>Is iOS Standalone:</strong></p>
+          <code id="ios-standalone"></code>
+          
           <p><strong>Notification Permission:</strong></p>
           <code id="debug-permission"></code>
           
           <p><strong>Service Worker State:</strong></p>
           <code id="sw-state"></code>
+          
+          <button id="force-show-notifications" class="btn btn-secondary" style="margin-top: 10px; width: 100%;">
+            Force Show Notifications Section
+          </button>
         </div>
       </details>
     </section>
@@ -202,6 +209,11 @@
         document.getElementById('display-mode').textContent = displayMode;
       }
       
+      if (document.getElementById('ios-standalone')) {
+        document.getElementById('ios-standalone').textContent = 
+          window.navigator.standalone ? 'YES' : 'NO';
+      }
+      
       if (document.getElementById('debug-permission')) {
         document.getElementById('debug-permission').textContent = 
           'Notification' in window ? Notification.permission : 'Not supported';
@@ -211,9 +223,23 @@
         navigator.serviceWorker.ready.then((registration) => {
           document.getElementById('sw-state').textContent = 
             registration.active ? 'Active' : 'Not active';
+        }).catch(() => {
+          document.getElementById('sw-state').textContent = 'Not registered';
         });
       }
     }
+    
+    // Force show notifications section for debugging
+    document.addEventListener('DOMContentLoaded', () => {
+      const forceBtn = document.getElementById('force-show-notifications');
+      if (forceBtn) {
+        forceBtn.addEventListener('click', () => {
+          document.getElementById('install-prompt').style.display = 'none';
+          document.getElementById('notification-section').style.display = 'block';
+          alert('Notification section forced to show. Check if Enable Notifications button appears.');
+        });
+      }
+    });
     
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', updateDebugInfo);

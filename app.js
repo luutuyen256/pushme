@@ -16,8 +16,25 @@ const state = {
 
 // Utility: Check if PWA is installed
 function isPWAInstalled() {
-  return window.matchMedia('(display-mode: standalone)').matches ||
-         window.navigator.standalone === true;
+  // Check for iOS standalone mode
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandalone = window.navigator.standalone === true;
+  
+  // Check for display-mode: standalone (works on most browsers)
+  const matchesStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  
+  // For iOS, primarily check navigator.standalone
+  const isPWA = isIOS ? isStandalone : (matchesStandalone || isStandalone);
+  
+  console.log('[App] PWA Detection:', {
+    isIOS,
+    isStandalone,
+    matchesStandalone,
+    isPWA,
+    userAgent: navigator.userAgent.substring(0, 100)
+  });
+  
+  return isPWA;
 }
 
 // Utility: Convert VAPID key from Base64 to Uint8Array
@@ -250,17 +267,26 @@ function updateUI() {
   state.isPWA = isPWAInstalled();
   state.notificationPermission = Notification.permission;
   
+  console.log('[App] Updating UI, state:', {
+    isPWA: state.isPWA,
+    notificationPermission: state.notificationPermission
+  });
+  
   // Update PWA status
   const installPrompt = document.getElementById('install-prompt');
   const notificationSection = document.getElementById('notification-section');
   const statusText = document.getElementById('pwa-status');
   
   if (state.isPWA) {
+    console.log('[App] Showing notification section');
     installPrompt.style.display = 'none';
     notificationSection.style.display = 'block';
-    statusText.textContent = '✓ Installed as PWA';
-    statusText.className = 'status-text success';
+    if (statusText) {
+      statusText.textContent = '✓ Installed as PWA';
+      statusText.className = 'status-text success';
+    }
   } else {
+    console.log('[App] Showing install prompt');
     installPrompt.style.display = 'block';
     notificationSection.style.display = 'none';
   }
