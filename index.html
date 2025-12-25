@@ -109,6 +109,9 @@
         <button onclick="window.location.href='https://limited.facebook.com'" class="btn btn-secondary" style="background: linear-gradient(135deg, #1877f2 0%, #0c4d9e 100%);">
           📱 Open Facebook Limited
         </button>
+        <button onclick="clearAppData()" class="btn btn-secondary" style="background: linear-gradient(135deg, #dc3545 0%, #a71d2a 100%);">
+          🗑️ Clear App Data
+        </button>
       </div>
 
       <!-- Info Cards -->
@@ -248,6 +251,34 @@
       document.addEventListener('DOMContentLoaded', updateDebugInfo);
     } else {
       updateDebugInfo();
+    }
+    
+    // Clear App Data function
+    function clearAppData() {
+      if (confirm('⚠️ Xóa toàn bộ dữ liệu app?\n\nĐiều này sẽ:\n- Xóa localStorage\n- Xóa Service Worker\n- Xóa cache\n- Hủy đăng ký notification\n\nBạn có chắc chắn?')) {
+        // Clear localStorage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Unregister Service Worker
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(registrations => {
+            registrations.forEach(reg => reg.unregister());
+          });
+        }
+        
+        // Clear caches
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+          });
+        }
+        
+        alert('✅ Đã xóa dữ liệu!\n\nApp sẽ reload...');
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
     }
   </script>
 </body>
